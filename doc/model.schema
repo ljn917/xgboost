@@ -486,6 +486,17 @@
             {
               "type": "object",
               "properties": {
+                "name": { "const": "rank:pairwise-v1" },
+                "lambda_rank_param": { "$ref": "#/definitions/lambda_rank_param"}
+              },
+              "required": [
+                "name",
+                "lambda_rank_param"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
                 "name": { "const": "rank:pairwise" },
                 "lambda_rank_param": { "$ref": "#/definitions/lambdarank_param"}
               },
