@@ -227,8 +227,8 @@ class LambdaRankObj : public ObjFunction {
 
   void GetGradient(const HostDeviceVector<bst_float>& preds,
                    const MetaInfo& info,
-                   int iter,
-                   HostDeviceVector<GradientPair>* out_gpair) override {
+                   std::int32_t iter,
+                   linalg::Matrix<GradientPair>* out_gpair) override {
     CHECK_EQ(preds.Size(), info.labels.Size()) << "label size predict size not match";
 
     // quick consistency when group is not available
@@ -270,8 +270,8 @@ class LambdaRankObj : public ObjFunction {
 
   void ComputeGradientsOnCPU(const HostDeviceVector<bst_float>& preds,
                              const MetaInfo& info,
-                             int iter,
-                             HostDeviceVector<GradientPair>* out_gpair,
+                             std::int32_t iter,
+                             linalg::Matrix<GradientPair>* out_gpair,
                              const std::vector<unsigned> &gptr) {
     LOG(DEBUG) << "Computing " << LambdaWeightComputerT::Name() << " gradients on CPU.";
 
@@ -279,9 +279,9 @@ class LambdaRankObj : public ObjFunction {
 
     const auto& preds_h = preds.HostVector();
     const auto& labels = info.labels.HostView();
-    std::vector<GradientPair>& gpair = out_gpair->HostVector();
+    out_gpair->Reshape(preds.Size(), 1);
+    auto gpair = out_gpair->HostView();
     const auto ngroup = static_cast<bst_omp_uint>(gptr.size() - 1);
-    out_gpair->Resize(preds.Size());
 
     dmlc::OMPException exc;
 #pragma omp parallel num_threads(ctx_->Threads())
@@ -300,7 +300,7 @@ class LambdaRankObj : public ObjFunction {
             lst.clear(); pairs.clear();
             for (unsigned j = gptr[k]; j < gptr[k+1]; ++j) {
               lst.emplace_back(preds_h[j], labels(j), j);
-              gpair[j] = GradientPair(0.0f, 0.0f);
+              gpair(j) = GradientPair(0.0f, 0.0f);
             }
             std::stable_sort(lst.begin(), lst.end(), ListEntry::CmpPred);
             rec.resize(lst.size());
@@ -349,8 +349,8 @@ class LambdaRankObj : public ObjFunction {
               bst_float g = p - 1.0f;
               bst_float h = std::max(p * (1.0f - p), eps);
               // accumulate gradient and hessian in both pid, and nid
-              gpair[pos.rindex] += GradientPair(g * w, 2.0f*w*h);
-              gpair[neg.rindex] += GradientPair(-g * w, 2.0f*w*h);
+              gpair(pos.rindex) += GradientPair(g * w, 2.0f*w*h);
+              gpair(neg.rindex) += GradientPair(-g * w, 2.0f*w*h);
             }
           });
         }
