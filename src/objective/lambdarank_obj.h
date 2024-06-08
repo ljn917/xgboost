@@ -115,7 +115,7 @@ LambdaGrad(linalg::VectorView<float const> labels, common::Span<float const> pre
   double delta_metric = std::abs(delta(y_high, y_low, rank_high, rank_low));
 
   if (best_score != worst_score) {
-    delta_metric /= (delta_score + 0.01);
+    //delta_metric /= (delta_score + 0.01);
   }
 
   if (unbiased) {
